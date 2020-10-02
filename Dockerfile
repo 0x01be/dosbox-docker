@@ -1,25 +1,21 @@
-FROM alpine
+FROM 0x01be/dosbox:build as build
 
-RUN apk add --no-cache --virtual dosbox-build-dependencies \
-    subversion \
-    build-base \
-    autoconf \
-    automake \
-    sdl-dev \
-    libogg-dev \
-    libvorbis-dev \
-    libpng-dev \
-    freeglut-dev \
-    libx11-dev
+FROM 0x01be/xpra
 
-RUN svn co svn://svn.code.sf.net/p/dosbox/code-0/dosbox/trunk /dosbox
+COPY --from=build /opt/dosbox/ /opt/dosbox/
 
-WORKDIR /dosbox
+USER root
 
-ENV LDFLAGS "${LDFLAGS} -s"
+RUN apk add --no-cache --virtual dosbox-runtime-dependencies \
+    libstdc++ \
+    sdl \
+    libogg \
+    libvorbis \
+    libpng \
+    freeglut
 
-RUN ./autogen.sh
-RUN ./configure --prefix=/opt/dosbox
-RUN make
-RUN make install
+USER xpra
+
+ENV PATH ${PATH}:/opt/dosbox/bin/
+ENV COMMAND "dosbox"
 
